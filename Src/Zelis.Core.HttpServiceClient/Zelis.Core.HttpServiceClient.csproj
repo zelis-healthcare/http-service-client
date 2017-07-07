@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
+    <TargetFrameworks>netstandard1.3;netstandard1.4;netstandard1.5;netstandard1.6;netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Copyright>Zelis Network Solutions</Copyright>
+    <Copyright>Copyright 2017 (c) Zelis Network Solutions. All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/zelis-healthcare/http-service-client</PackageProjectUrl>
     <PackageLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/zelis-healthcare/http-service-client.git</RepositoryUrl>
@@ -17,3 +17,7 @@
   </ItemGroup>
 
 </Project>
+
+
+
+
