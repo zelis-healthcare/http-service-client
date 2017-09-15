@@ -12,7 +12,7 @@ namespace Zelis.Core.HttpServiceClient
 {
     public class HttpServiceClient : IHttpServiceClient
     {
-        private readonly HttpServiceClientConfiguration _configuration;
+        protected readonly HttpServiceClientConfiguration _configuration;
 
         protected readonly HttpClient _httpClient;
 
