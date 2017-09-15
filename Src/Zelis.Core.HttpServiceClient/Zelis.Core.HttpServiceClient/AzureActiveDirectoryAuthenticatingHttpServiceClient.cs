@@ -30,8 +30,8 @@ namespace Zelis.Core.HttpServiceClient
                 if (cancellationToken == null)
                     throw new ArgumentNullException(nameof(cancellationToken));
 
-                var headers = new WebHeaderCollection();
-                headers["Authorization"] = $"Bearer {await _getAzureActiveDirectoryBearerToken(cancellationToken)}";
+                string azureActiveDirectoryBearerToken = await _getAzureActiveDirectoryBearerToken(cancellationToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("BEARER", azureActiveDirectoryBearerToken);
 
                 return await base.SendAsync(request, cancellationToken);
             }
@@ -43,8 +43,6 @@ namespace Zelis.Core.HttpServiceClient
 
         private AuthenticationContext _authenticationContext;
         private readonly ClientCredential _clientCredential;
-
-        private string _azureActiveDirectoryBearerToken;
 
         public AzureActiveDirectoryAuthenticatingHttpServiceClient(
             AzureActiveDirectoryAuthenticatingHttpServiceClientConfiguration azureActiveDirectoryAuthenticatingHttpServiceClientConfiguration
@@ -63,11 +61,10 @@ namespace Zelis.Core.HttpServiceClient
 
         protected override HttpClient InitializeHttpClient(HttpServiceClientConfiguration configuration)
         {
-            var httpClient = new AzureActiveDirectoryAuthenticatingHttpClient((ct) =>
+            var httpClient = new AzureActiveDirectoryAuthenticatingHttpClient(GetAzureActiveDirectoryBearerToken)
             {
-                Task.Run(async() => await RefreshBearerToken(ct));
-                return Task.FromResult(_azureActiveDirectoryBearerToken);
-            });
+                BaseAddress = configuration.BaseAddress
+            };
 
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Clear();
@@ -77,7 +74,7 @@ namespace Zelis.Core.HttpServiceClient
             return httpClient;
         }
 
-        private async Task RefreshBearerToken(CancellationToken cancellationToken)
+        private async Task<string> GetAzureActiveDirectoryBearerToken(CancellationToken cancellationToken)
         {
             if (cancellationToken == null)
                 throw new ArgumentNullException(nameof(cancellationToken));
@@ -86,7 +83,7 @@ namespace Zelis.Core.HttpServiceClient
                 _azureActiveDirectoryAuthenticatingHttpServiceClientConfiguration.ResourceId,
                 _clientCredential
             );
-            _azureActiveDirectoryBearerToken = result.AccessToken;
+            return result.AccessToken;
         }
     }
 }
