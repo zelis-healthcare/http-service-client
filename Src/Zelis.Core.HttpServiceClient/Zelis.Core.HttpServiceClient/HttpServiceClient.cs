@@ -20,23 +20,39 @@ namespace Zelis.Core.HttpServiceClient
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _httpClient = InitializeHttpClient(configuration);
+            _httpClient = InitializeHttpClient();
         }
 
-        protected virtual HttpClient InitializeHttpClient(HttpServiceClientConfiguration configuration)
+        protected virtual HttpClient InitializeHttpClient()
         {
-            HttpClientHandler handler = new HttpClientHandler { UseDefaultCredentials = true };
+            HttpClientHandler handler = InitializeHttpClientHandler();
             var httpClient = new HttpClient(handler)
             {
-                BaseAddress = configuration.BaseAddress
+                BaseAddress = _configuration.BaseAddress
             };
 
-            httpClient.DefaultRequestHeaders.Clear();
+            //httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.Timeout = new TimeSpan(0, 0, 0, configuration.Timeout);
+            httpClient.Timeout = new TimeSpan(0, 0, 0, _configuration.Timeout);
 
             return httpClient;
+        }
+
+        protected virtual HttpClientHandler InitializeHttpClientHandler()
+        {
+            var handler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+            };
+
+            if (
+                _configuration.EnableResponseCompression
+                && handler.SupportsAutomaticDecompression
+            )
+                handler.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+
+            return handler;
         }
 
         public virtual async Task<HttpResponseMessage> DeleteRequest(Uri uri, CancellationToken cancellationToken, WebHeaderCollection requestHeaders = null)

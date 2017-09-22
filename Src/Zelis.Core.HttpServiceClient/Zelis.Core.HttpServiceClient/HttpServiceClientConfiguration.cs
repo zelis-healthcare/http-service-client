@@ -25,6 +25,8 @@ namespace Zelis.Core.HttpServiceClient
 
         public Uri BaseAddress { get { return _baseAddress; } }
 
+        public bool EnableResponseCompression { get; set; } = false;
+
         public int Timeout { get { return _timeout; } }
     }
 }
