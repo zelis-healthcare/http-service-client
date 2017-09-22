@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Specialized;
+using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,23 +22,38 @@ namespace Zelis.Core.HttpServiceClient
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _httpClient = InitializeHttpClient(configuration);
+            _httpClient = InitializeHttpClient();
         }
 
-        protected virtual HttpClient InitializeHttpClient(HttpServiceClientConfiguration configuration)
+        protected virtual HttpClient InitializeHttpClient()
         {
-            HttpClientHandler handler = new HttpClientHandler { UseDefaultCredentials = true };
+            HttpClientHandler handler = InitializeHttpClientHandler();
             var httpClient = new HttpClient(handler)
             {
-                BaseAddress = configuration.BaseAddress
+                BaseAddress = _configuration.BaseAddress
             };
 
-            httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.Timeout = new TimeSpan(0, 0, 0, configuration.Timeout);
+            httpClient.Timeout = new TimeSpan(0, 0, 0, _configuration.Timeout);
 
             return httpClient;
+        }
+
+        protected virtual HttpClientHandler InitializeHttpClientHandler()
+        {
+            var handler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+            };
+
+            if (
+                _configuration.EnableResponseCompression
+                && handler.SupportsAutomaticDecompression
+            )
+                handler.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+
+            return handler;
         }
 
         public virtual async Task<HttpResponseMessage> DeleteRequest(Uri uri, CancellationToken cancellationToken, WebHeaderCollection requestHeaders = null)
@@ -103,11 +120,28 @@ namespace Zelis.Core.HttpServiceClient
             if (cancellationToken == null)
                 throw new ArgumentNullException(nameof(cancellationToken));
 
+            HttpContent requestContent = content;
+            if (_configuration.EnableRequestCompression)
+            {
+                MediaTypeHeaderValue mediaTypeHeaderValue = requestContent.Headers.ContentType;
+                byte[] requestContentBytes = await requestContent.ReadAsByteArrayAsync();
+                using (var stream = new MemoryStream())
+                {
+                    using (var gzip = new GZipStream(stream, CompressionMode.Compress, true))
+                    {
+                        await gzip.WriteAsync(requestContentBytes, 0, requestContentBytes.Length);
+                    }
+                    requestContent = new ByteArrayContent(stream.ToArray());
+                }
+                requestContent.Headers.ContentEncoding.Add("gzip");
+                requestContent.Headers.ContentType = mediaTypeHeaderValue;
+            }
+
             var request = new HttpRequestMessage(httpMethod, uri);
-            request.Content = content;
+            request.Content = requestContent;
             if (requestHeaders != null)
             {
-                request.Headers.Clear();
+                //request.Headers.Clear();
                 foreach (string headerName in requestHeaders.AllKeys)
                 {
                     string headerValue = requestHeaders[headerName];
@@ -136,7 +170,7 @@ namespace Zelis.Core.HttpServiceClient
             var request = new HttpRequestMessage(httpMethod, uri);
             if (requestHeaders != null)
             {
-                request.Headers.Clear();
+                //request.Headers.Clear();
                 foreach (string headerName in requestHeaders.AllKeys)
                 {
                     string headerValue = requestHeaders[headerName];

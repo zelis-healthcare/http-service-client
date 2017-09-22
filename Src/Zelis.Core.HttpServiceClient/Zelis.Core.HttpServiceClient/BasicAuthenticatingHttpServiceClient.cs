@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 
 namespace Zelis.Core.HttpServiceClient
 {
-    public class BasicAuthenticatingHttpServiceClient : HttpServiceClient
+    public class BasicAuthenticatingHttpServiceClient : AuthenticatingHttpServiceClient
     {
         public BasicAuthenticatingHttpServiceClient(
             AuthenticatingHttpServiceClientConfiguration configuration
@@ -14,40 +14,45 @@ namespace Zelis.Core.HttpServiceClient
         {
         }
 
-        protected override HttpClient InitializeHttpClient(HttpServiceClientConfiguration configuration)
+        protected override HttpClient InitializeHttpClient()
         {
-            if (!(configuration is AuthenticatingHttpServiceClientConfiguration))
-                throw new ArgumentException("Expected a AuthenticatingHttpServiceClientConfiguration");
-            var authenticatingConfiguration = (configuration as AuthenticatingHttpServiceClientConfiguration);
-
-            var networkCredential = new NetworkCredential(authenticatingConfiguration.Username, authenticatingConfiguration.Password);
-            var credentialCache = new CredentialCache();
-            credentialCache.Add(authenticatingConfiguration.BaseAddress, "NTLM", networkCredential);
-
-            HttpClientHandler handler = new HttpClientHandler
-            {
-                AllowAutoRedirect = true,
-                Credentials = credentialCache,
-                UseDefaultCredentials = true,
-            };
+            HttpClientHandler handler = InitializeHttpClientHandler();
             var httpClient = new HttpClient(handler)
             {
-                BaseAddress = authenticatingConfiguration.BaseAddress
+                BaseAddress = _configuration.BaseAddress
             };
-            httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             string credentials = Convert.ToBase64String(
                 System.Text.Encoding.ASCII.GetBytes(
-                    string.Format("{0}:{1}", authenticatingConfiguration.Username, authenticatingConfiguration.Password)
+                    $"{_authenticatingHttpServiceClientConfiguration.Username}:{_authenticatingHttpServiceClientConfiguration.Password}"
                 )
             );
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 
-            httpClient.Timeout = new TimeSpan(0, 0, 0, authenticatingConfiguration.Timeout);
+            httpClient.Timeout = new TimeSpan(0, 0, 0, _configuration.Timeout);
 
             return httpClient;
+        }
+
+        protected override HttpClientHandler InitializeHttpClientHandler()
+        {
+            var networkCredential = new NetworkCredential(
+                _authenticatingHttpServiceClientConfiguration.Username,
+                _authenticatingHttpServiceClientConfiguration.Password
+            );
+
+            var credentialCache = new CredentialCache
+            {
+                { _configuration.BaseAddress, "NTLM", networkCredential }
+            };
+
+            HttpClientHandler handler = base.InitializeHttpClientHandler();
+            handler.Credentials = credentialCache;
+            handler.UseDefaultCredentials = true;
+
+            return handler;
         }
     }
 }

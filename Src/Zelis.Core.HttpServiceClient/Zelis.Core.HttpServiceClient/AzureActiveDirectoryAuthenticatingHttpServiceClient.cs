@@ -1,6 +1,5 @@
 ﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -18,7 +17,8 @@ namespace Zelis.Core.HttpServiceClient
 
             private readonly GetAzureActiveDirectoryBearerToken _getAzureActiveDirectoryBearerToken;
 
-            public AzureActiveDirectoryAuthenticatingHttpClient(GetAzureActiveDirectoryBearerToken getAzureActiveDirectoryBearerToken)
+            public AzureActiveDirectoryAuthenticatingHttpClient(HttpMessageHandler handler, GetAzureActiveDirectoryBearerToken getAzureActiveDirectoryBearerToken)
+                : base(handler)
             {
                 _getAzureActiveDirectoryBearerToken = getAzureActiveDirectoryBearerToken ?? throw new ArgumentNullException(nameof(getAzureActiveDirectoryBearerToken));
             }
@@ -59,17 +59,18 @@ namespace Zelis.Core.HttpServiceClient
             );
         }
 
-        protected override HttpClient InitializeHttpClient(HttpServiceClientConfiguration configuration)
+        protected override HttpClient InitializeHttpClient()
         {
-            var httpClient = new AzureActiveDirectoryAuthenticatingHttpClient(GetAzureActiveDirectoryBearerToken)
+            HttpClientHandler handler = InitializeHttpClientHandler();
+            var httpClient = new AzureActiveDirectoryAuthenticatingHttpClient(handler, GetAzureActiveDirectoryBearerToken)
             {
-                BaseAddress = configuration.BaseAddress
+                BaseAddress = _configuration.BaseAddress,
             };
 
-            httpClient.DefaultRequestHeaders.Clear();
+            //httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.Timeout = new TimeSpan(0, 0, 0, configuration.Timeout);
+            httpClient.Timeout = new TimeSpan(0, 0, 0, _configuration.Timeout);
 
             return httpClient;
         }
