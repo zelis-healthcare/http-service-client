@@ -103,7 +103,7 @@ namespace Zelis.Core.HttpServiceClient
         }
 
 
-        private async Task<HttpResponseMessage> SendWithBody(Uri uri, HttpMethod httpMethod, HttpContent content, CancellationToken cancellationToken, WebHeaderCollection requestHeaders = null)
+        protected virtual async Task<HttpResponseMessage> SendWithBody(Uri uri, HttpMethod httpMethod, HttpContent content, CancellationToken cancellationToken, WebHeaderCollection requestHeaders = null)
         {
             if (uri == null)
                 throw new ArgumentNullException(nameof(uri));
@@ -152,7 +152,7 @@ namespace Zelis.Core.HttpServiceClient
             return await _httpClient.SendAsync(request, cancellationToken);
         }
 
-        private async Task<HttpResponseMessage> SendWithoutBody(Uri uri, HttpMethod httpMethod, CancellationToken cancellationToken, WebHeaderCollection requestHeaders = null)
+        protected virtual async Task<HttpResponseMessage> SendWithoutBody(Uri uri, HttpMethod httpMethod, CancellationToken cancellationToken, WebHeaderCollection requestHeaders = null)
         {
             if (uri == null)
                 throw new ArgumentNullException(nameof(uri));
