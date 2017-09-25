@@ -7,7 +7,7 @@ namespace Zelis.Core.HttpServiceClient
         private readonly string _password;
         private readonly string _username;
 
-        protected AuthenticatingHttpServiceClientConfiguration(
+        public AuthenticatingHttpServiceClientConfiguration(
             string baseAddress,
             string password,
             int timeout,
