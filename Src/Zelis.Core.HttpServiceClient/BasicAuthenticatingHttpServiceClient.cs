@@ -24,11 +24,16 @@ namespace Zelis.Core.HttpServiceClient
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
+            if (!(_configuration is AuthenticatingHttpServiceClientConfiguration))
+                throw new ArgumentException("Expected a AuthenticatingHttpServiceClientConfiguration");
+            var authenticatingConfiguration = (_configuration as AuthenticatingHttpServiceClientConfiguration);
+
             string credentials = Convert.ToBase64String(
                 System.Text.Encoding.ASCII.GetBytes(
-                    $"{_authenticatingHttpServiceClientConfiguration.Username}:{_authenticatingHttpServiceClientConfiguration.Password}"
+                    $"{authenticatingConfiguration.Username}:{authenticatingConfiguration.Password}"
                 )
             );
+
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 
             httpClient.Timeout = new TimeSpan(0, 0, 0, _configuration.Timeout);
@@ -38,9 +43,13 @@ namespace Zelis.Core.HttpServiceClient
 
         protected override HttpClientHandler InitializeHttpClientHandler()
         {
+            if (!(_configuration is AuthenticatingHttpServiceClientConfiguration))
+                throw new ArgumentException("Expected a AuthenticatingHttpServiceClientConfiguration");
+            var authenticatingConfiguration = (_configuration as AuthenticatingHttpServiceClientConfiguration);
+
             var networkCredential = new NetworkCredential(
-                _authenticatingHttpServiceClientConfiguration.Username,
-                _authenticatingHttpServiceClientConfiguration.Password
+                authenticatingConfiguration.Username,
+                authenticatingConfiguration.Password
             );
 
             var credentialCache = new CredentialCache
