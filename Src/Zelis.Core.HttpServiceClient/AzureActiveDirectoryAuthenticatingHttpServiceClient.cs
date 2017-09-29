@@ -31,7 +31,7 @@ namespace Zelis.Core.HttpServiceClient
                     throw new ArgumentNullException(nameof(cancellationToken));
 
                 string azureActiveDirectoryBearerToken = await _getAzureActiveDirectoryBearerToken(cancellationToken);
-                request.Headers.Authorization = new AuthenticationHeaderValue("BEARER", azureActiveDirectoryBearerToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", azureActiveDirectoryBearerToken);
 
                 return await base.SendAsync(request, cancellationToken);
             }
