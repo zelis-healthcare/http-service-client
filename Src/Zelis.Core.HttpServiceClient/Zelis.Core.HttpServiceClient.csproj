@@ -20,7 +20,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="microsoft.identitymodel.clients.activedirectory" Version="3.16.1" />
     <PackageReference Include="newtonsoft.json" Version="10.0.3" />
   </ItemGroup>
 
