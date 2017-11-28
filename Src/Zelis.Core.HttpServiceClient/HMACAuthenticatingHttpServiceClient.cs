@@ -91,7 +91,7 @@ namespace Zelis.Core.HttpServiceClient
 
             string timestamp = ((long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds).ToString();
 
-            string canonicalizedResource = $"/{requestUri.ToString()}";
+            string canonicalizedResource = $"/{requestUri.OriginalString.Split('?')[0]}";
 
             string nonce = Guid.NewGuid().ToString("N");
 
